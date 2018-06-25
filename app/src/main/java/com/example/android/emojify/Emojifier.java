@@ -29,6 +29,9 @@ import com.google.android.gms.vision.face.FaceDetector;
 class Emojifier {
 
     private static final String LOG_TAG = Emojifier.class.getSimpleName();
+    private static final double EYE_OPEN_PROB_THRESHOLD = 0.7;
+    private static final double SMILE_PROB_THRESHOLD = 0.3;
+    private static boolean smiling = false, left_eye_closed = false, right_eye_closed = false;
 
     /**
      * Method for detecting faces in a bitmap.
@@ -61,8 +64,8 @@ class Emojifier {
                 Face face = faces.valueAt(i);
 
                 // Log the classification probabilities for each face.
-                getClassifications(face);
-                // TODO (6): Change the call to getClassifications to whichEmoji() to log the appropriate emoji for the facial expression.
+                whichEmoji(face);
+                // TODO (6): Change the call to whichEmoji to whichEmoji() to log the appropriate emoji for the facial expression.
             }
 
         }
@@ -78,20 +81,65 @@ class Emojifier {
      *
      * @param face The face to get the classification probabilities.
      */
-    private static void getClassifications(Face face){
-        // TODO (2): Change the name of the getClassifications() method to whichEmoji() (also change the log statements)
+    private static Emoji whichEmoji(Face face){
+        // TODO (2): Change the name of the whichEmoji() method to whichEmoji() (also change the log statements)
         // Log all the probabilities
-        Log.d(LOG_TAG, "getClassifications: smilingProb = " + face.getIsSmilingProbability());
-        Log.d(LOG_TAG, "getClassifications: leftEyeOpenProb = "
+        Log.d(LOG_TAG, "whichEmoji: smilingProb = " + face.getIsSmilingProbability());
+        Log.d(LOG_TAG, "whichEmoji: leftEyeOpenProb = "
                 + face.getIsLeftEyeOpenProbability());
-        Log.d(LOG_TAG, "getClassifications: rightEyeOpenProb = "
+        Log.d(LOG_TAG, "whichEmoji: rightEyeOpenProb = "
                 + face.getIsRightEyeOpenProbability());
 
         // TODO (3): Create threshold constants for a person smiling, and and eye being open by taking pictures of yourself and your friends and noting the logs.
+
         // TODO (4): Create 3 boolean variables to track the state of the facial expression based on the thresholds you set in the previous step: smiling, left eye closed, right eye closed.
         // TODO (5): Create an if/else system that selects the appropriate emoji based on the above booleans and log the result.
+        if(face.getIsSmilingProbability()>SMILE_PROB_THRESHOLD)
+            smiling = true;
+        if(face.getIsLeftEyeOpenProbability()<EYE_OPEN_PROB_THRESHOLD)
+            left_eye_closed = true;
+        if(face.getIsRightEyeOpenProbability()<EYE_OPEN_PROB_THRESHOLD)
+            right_eye_closed = true;
+
+        Emoji emoji;
+        if(smiling)
+        {
+            if(left_eye_closed && !right_eye_closed)
+                emoji = Emoji.left_wink;
+            else if(!left_eye_closed && right_eye_closed)
+                emoji = Emoji.right_wink;
+            else if(left_eye_closed)
+                emoji = Emoji.closed_eye_smiling;
+            else
+                emoji = Emoji.smiling;
+        }
+        else
+        {
+            if(left_eye_closed && !right_eye_closed)
+                emoji = Emoji.left_wink_frown;
+            else if(!left_eye_closed && right_eye_closed)
+                emoji = Emoji.right_wink_frown;
+            else if(left_eye_closed)
+                emoji = Emoji.closed_eye_frowning;
+            else
+                emoji = Emoji.frowning;
+        }
+
+        Log.e(LOG_TAG,"Emoji: " + emoji.name());
+        smiling = left_eye_closed = right_eye_closed = false;
+        return emoji;
     }
 
 
     // TODO (1): Create an enum class called Emoji that contains all the possible emoji you can make (smiling, frowning, left wink, right wink, left wink frowning, right wink frowning, closed eye smiling, close eye frowning).
+    enum Emoji{
+        smiling,
+        frowning,
+        left_wink,
+        right_wink,
+        left_wink_frown,
+        right_wink_frown,
+        closed_eye_frowning,
+        closed_eye_smiling;
+    }
 }
